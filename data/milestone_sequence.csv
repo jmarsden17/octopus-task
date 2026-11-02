@@ -1,0 +1,11 @@
+sequence,milestone_id,milestone_name,applies_to,lifecycle_phase
+10,LIFE_MILE_1001,Proceeding with Development,Infrastructure,In Development
+20,LIFE_MILE_1005,Grid Connection Offer Accepted (Binding),Infrastructure,In Development
+30,LIFE_MILE_1009,Fully Consented,Infrastructure,Last Mile Development
+40,LIFE_MILE_1017,Notice to Proceed (NTP – or equivalent) Issued,Infrastructure,In Construction
+50,LIFE_MILE_1018,Construction Started,Infrastructure,In Construction
+60,LIFE_MILE_1019,Grid Energisation Date (First kWh),Infrastructure,In Construction
+70,LIFE_MILE_1021,Commercial Operation Date (COD),Infrastructure,Operational
+80,LIFE_MILE_1022,Provisional Acceptance Certificate (PAC),Infrastructure,Operational
+90,LIFE_MILE_1026,Operational End,Infrastructure,Decommissioned
+10,LIFE_MILE_1000,First Transaction,Platform,Business / Developer

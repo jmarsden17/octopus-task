@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-techtest}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-techtest}
+      POSTGRES_DB: ${POSTGRES_DB:-assets}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./data:/data:ro   # CSV files available inside the container under /data
+
+volumes:
+  pgdata:
