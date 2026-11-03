@@ -9,9 +9,22 @@ from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from psycopg2 import errors
 from psycopg2.extras import RealDictCursor
+from pydantic import BaseModel, Field
+
 
 app = FastAPI()
 load_dotenv()
+
+
+class MilestoneIn(BaseModel):
+    milestone_id: str
+    milestone_type_id: int
+    milestone_date: date
+
+
+class MilestonePatch(BaseModel):
+    milestone_type_id: Optional[int] = None
+    milestone_date: Optional[date] = None
 
 
 @contextmanager
@@ -108,14 +121,41 @@ def reference():
         return {"milestones": milestones, "milestone_types": types, "roles": roles}
 
 
-@app.post("/assets/{asset_id}/milestones")
-def add_milestone(asset_id: str, milestone_id: str, milestone_date: str):
-    pass
+@app.post("/assets/{asset_id}/milestones", status_code=201)
+def add_milestone(asset_id: str, body: MilestoneIn):
+    with db() as cur:
+        cur.execute("SELECT 1 FROM assets WHERE asset_id = %s", (asset_id,))
+        if not cur.fetchone():
+            raise HTTPException(404, "Asset not found")
+        cur.execute("""
+            INSERT INTO asset_milestones (asset_id, milestone_id, milestone_type_id, milestone_date)
+            VALUES (%s, %s, %s, %s) RETURNING asset_milestone_id""",
+                    (asset_id, body.milestone_id, body.milestone_type_id, body.milestone_date))
+        return cur.fetchone()
 
 
 @app.patch("/milestones/{id}")
-def update_milestone(id: str, milestone_date: str):
-    pass
+def update_milestone(id: int, body: MilestonePatch):
+    with db() as cur:
+        cur.execute("""
+            UPDATE asset_milestones
+            SET milestone_type_id = COALESCE(%s, milestone_type_id),
+                milestone_date    = COALESCE(%s, milestone_date)
+            WHERE asset_milestone_id = %s RETURNING asset_milestone_id""",
+                    (body.milestone_type_id, body.milestone_date, id))
+        row = cur.fetchone()
+        if not row:
+            raise HTTPException(404, "Milestone not found")
+        return row
+
+
+@app.delete("/milestones/{id}", status_code=204)
+def delete_milestone(id: int):
+    with db() as cur:
+        cur.execute(
+            "DELETE FROM asset_milestones WHERE asset_milestone_id = %s RETURNING 1", (id,))
+        if not cur.fetchone():
+            raise HTTPException(404, "Milestone not found")
 
 
 @app.post("/assets/{asset_id}/experts")
