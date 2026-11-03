@@ -70,7 +70,7 @@ CREATE TABLE companies (
 );
 
 CREATE TABLE assets (
-    asset_id VARCHAR NOT NULL PRIMARY KEY,
+    asset_id VARCHAR UNIQUE NOT NULL PRIMARY KEY,
     asset_type_id INT NOT NULL,
     asset_name VARCHAR NOT NULL,
     portfolio_id INT NOT NULL,
@@ -107,7 +107,7 @@ CREATE TABLE milestone_types (
 );
 
 CREATE TABLE milestones (
-    milestone_id VARCHAR PRIMARY KEY,
+    milestone_id VARCHAR UNIQUE NOT NULL PRIMARY KEY,
     milestone_name VARCHAR NOT NULL,
     sequence_id INT NOT NULL,
     asset_type_id INT NOT NULL,
