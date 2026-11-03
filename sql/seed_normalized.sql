@@ -88,7 +88,3 @@ FROM raw_asset_milestones r
 JOIN milestone_types mt ON r.milestone_type = mt.milestone_type
 WHERE r.asset_id IS NOT NULL AND r.milestone_id IS NOT NULL;
 
-INSERT INTO people (person_name,person_email)
-SELECT DISTINCT person_name, person_email
-FROM raw_asset_milestones
-WHERE person_name IS NOT NULL AND person_email IS NOT NULL;

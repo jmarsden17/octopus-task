@@ -4,8 +4,6 @@ from psycopg2.extras import execute_values
 import pandas as pd
 from dotenv import load_dotenv
 
-load_dotenv()
-
 
 def load_data():
     return pd.read_csv('asset_milestones.csv')
@@ -20,7 +18,7 @@ def split_people():
 
 
 def connect_to_db():
-    load_dotenv()  # Load environment variables from .env file
+    load_dotenv()
     try:
         conn = psycopg2.connect(
             host=os.environ['DATABASE_URL'],
