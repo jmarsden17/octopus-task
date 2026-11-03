@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asset lifecycle</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 960px; margin: 2rem auto; padding: 0 1rem; }
+  table { border-collapse: collapse; width: 100%; margin-bottom: 1.5rem; }
+  th, td { border-bottom: 1px solid #ccc; padding: .35rem .5rem; text-align: left; }
+  #error { display: none; background: #fde8e8; color: #900; padding: .6rem; margin: 1rem 0; border-radius: 4px; }
+  a, .link { color: #06c; cursor: pointer; text-decoration: underline; }
+  form { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+  input, select, button { padding: .3rem; }
+</style>
+</head>
+<body>
+<h1 id="title">Assets</h1>
+<div id="error" role="alert"></div>
+<div id="app"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const opts = (rows, val, label) => rows.map(r => `<option value="${esc(r[val])}">${esc(r[label])}</option>`).join("");
+let ref = null;
+
+async function api(method, url, body) {
+  const res = await fetch(url, {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = res.status === 204 ? null : await res.json();
+  if (!res.ok) {
+    let msg = data.detail;
+    if (Array.isArray(msg)) msg = msg.map(d => `${d.loc.slice(1).join(".")}: ${d.msg}`).join("; ");
+    $("#error").textContent = msg;
+    $("#error").style.display = "block";
+    throw new Error(msg);
+  }
+  $("#error").style.display = "none";
+  return data;
+}
+
+async function showList() {
+  $("#title").textContent = "Assets";
+  const assets = await api("GET", "/assets");
+  $("#app").innerHTML = `<table>
+    <tr><th>Asset</th><th>Name</th><th>Current phase</th><th>Since</th></tr>
+    ${assets.map(a => `<tr>
+      <td><a onclick="showAsset('${esc(a.asset_id)}')">${esc(a.asset_id)}</a></td>
+      <td>${esc(a.asset_name)}</td><td>${esc(a.phase || "No status")}</td><td>${esc(a.since || "")}</td></tr>`).join("")}
+  </table>`;
+}
+
+async function showAsset(id) {
+  if (!ref) ref = await api("GET", "/reference");
+  const a = await api("GET", `/assets/${encodeURIComponent(id)}`);
+  $("#title").textContent = `${a.asset_id}: ${a.asset_name}`;
+  const myMilestones = ref.milestones.filter(m => m.asset_type_id === a.asset_type_id);
+  $("#app").innerHTML = `
+    <p><a onclick="showList()">&larr; All assets</a></p>
+    <p>${esc(a.asset_type_name)} &middot; ${esc(a.technology_name)} &middot; ${esc(a.capacity_mw)} MW &middot;
+       ${esc(a.country_name)}<br>Company: ${esc(a.company_name)} &middot; Portfolio: ${esc(a.portfolio_name)}</p>
+
+    <h2>Status history</h2>
+    <table><tr><th>Phase</th><th>From</th><th>Until</th></tr>
+    ${a.status_history.map(h => `<tr><td>${esc(h.phase)}</td><td>${esc(h.start_date)}</td><td>${esc(h.end_date || "current")}</td></tr>`).join("")
+      || "<tr><td colspan=3>No status yet</td></tr>"}</table>
+
+    <h2>Milestones</h2>
+    <table><tr><th>Milestone</th><th>Type</th><th>Date</th><th></th></tr>
+    ${a.milestones.map(m => `<tr><td>${esc(m.milestone_name)}</td><td>${esc(m.milestone_type_name)}</td><td>${esc(m.milestone_date)}</td>
+      <td><span class="link" onclick="editMilestone(${m.asset_milestone_id}, '${esc(m.milestone_date)}', '${esc(id)}')">change date</span> |
+          <span class="link" onclick="deleteMilestone(${m.asset_milestone_id}, '${esc(id)}')">delete</span></td></tr>`).join("")}</table>
+    <form id="msForm">
+      <select name="milestone_id">${opts(myMilestones, "milestone_id", "milestone_name")}</select>
+      <select name="milestone_type_id">${opts(ref.milestone_types, "milestone_type_id", "milestone_type_name")}</select>
+      <input type="date" name="milestone_date" required>
+      <button>Record milestone</button>
+    </form>
+
+    <h2>People</h2>
+    <table><tr><th>Name</th><th>Email</th><th>Role</th><th></th></tr>
+    ${a.experts.map(e => `<tr><td>${esc(e.person_name)}</td><td>${esc(e.person_email)}</td><td>${esc(e.role_name)}</td>
+      <td><span class="link" onclick="removeExpert(${e.asset_expert_id}, '${esc(id)}')">remove</span></td></tr>`).join("")}</table>
+    <form id="exForm">
+      <input name="person_name" placeholder="Name" required>
+      <input name="person_email" type="email" placeholder="Email" required>
+      <select name="role_id">${opts(ref.roles, "role_id", "role_name")}</select>
+      <button>Assign person</button>
+    </form>`;
+
+  $("#msForm").onsubmit = async ev => {
+    ev.preventDefault();
+    const f = Object.fromEntries(new FormData(ev.target));
+    f.milestone_type_id = Number(f.milestone_type_id);
+    try { await api("POST", `/assets/${encodeURIComponent(id)}/milestones`, f); await showAsset(id); } catch {}
+  };
+  $("#exForm").onsubmit = async ev => {
+    ev.preventDefault();
+    const f = Object.fromEntries(new FormData(ev.target));
+    f.role_id = Number(f.role_id);
+    try { await api("POST", `/assets/${encodeURIComponent(id)}/experts`, f); await showAsset(id); } catch {}
+  };
+}
+
+async function editMilestone(msId, current, assetId) {
+  const d = prompt("New date (YYYY-MM-DD):", current);
+  if (!d) return;
+  try { await api("PATCH", `/milestones/${msId}`, { milestone_date: d }); await showAsset(assetId); } catch {}
+}
+async function deleteMilestone(msId, assetId) {
+  if (!confirm("Delete this milestone?")) return;
+  try { await api("DELETE", `/milestones/${msId}`); await showAsset(assetId); } catch {}
+}
+async function removeExpert(exId, assetId) {
+  try { await api("DELETE", `/experts/${exId}`); await showAsset(assetId); } catch {}
+}
+
+showList();
+</script>
+</body>
+</html>
