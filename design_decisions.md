@@ -1,11 +1,24 @@
 # Design decisions
 
 ## How to build and run
-<!-- Exact steps to build the database and start the app from a fresh clone, in
-     order. We'll follow them as written. -->
-
+1. In your terminal run 
+``` bash
+docker compose up -d
+```
+2. To set up the raw data tables:
+``` bash
+docker compose exec -T postgres psql -U techtest -d assets < sql/schema.sql
+```
+3. To seed the raw data tables:
+``` bash
+\copy raw_asset_milestones FROM 'data/asset_milestones.csv' WITH (FORMAT CSV, HEADER TRUE);
+```
+``` bash
+\copy raw_milestone_sequence FROM 'data/milestone_sequence.csv' WITH (FORMAT CSV, HEADER TRUE);
+```
 ## Data model
-<!-- Your tables, how they relate, and why. A diagram is welcome. -->
+![alt text](<Screenshot 2026-11-03 at 11.54.00.png>)
+
 
 ## Status from milestones
 <!-- How your status history table works, how the trigger keeps it up to date when
@@ -24,6 +37,8 @@
      Note any checkpoint results that changed as a result. -->
 
 ## Assumptions
+
+- The instructions said data should be 'normalised' so I used a 3NF style data model, rather than a star schema.
 
 ## How you used AI tools
 <!-- Which tools, what for, and anything you changed or rejected from their suggestions -->
