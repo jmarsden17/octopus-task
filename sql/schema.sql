@@ -76,7 +76,7 @@ CREATE TABLE assets (
     portfolio_id INT NOT NULL,
     technology_id INT,
     country_id INT,
-    capacity_mw DECIMAL CHECK (capacity_mw IS NULL OR capacity_mw >= 0),
+    capacity_mw DECIMAL(10, 2) CHECK (capacity_mw IS NULL OR capacity_mw >= 0),
     company_id INT NOT NULL,
     CHECK (
         (technology_id IS NULL AND country_id IS NULL AND capacity_mw IS NULL)
@@ -92,7 +92,7 @@ CREATE TABLE assets (
 
 CREATE TABLE sequences (
     sequence_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    sequence_name INT NOT NULL CHECK (sequence_name > 0)
+    sequence_name INT NOT NULL UNIQUE CHECK (sequence_name BETWEEN 10 AND 90)
 );
 
 CREATE TABLE lifecycle_phases (
