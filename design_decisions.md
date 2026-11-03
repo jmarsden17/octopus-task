@@ -16,6 +16,8 @@ docker compose exec -T postgres psql -U techtest -d assets < sql/schema.sql
 ``` bash
 \copy raw_milestone_sequence FROM 'data/milestone_sequence.csv' WITH (FORMAT CSV, HEADER TRUE);
 ```
+
+
 ## Data model
 ![alt text](<Screenshot 2026-11-03 at 11.54.00.png>)
 

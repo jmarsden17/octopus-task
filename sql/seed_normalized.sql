@@ -118,3 +118,37 @@ JOIN milestone_types AS mt
     ON mt.milestone_type_name = btrim(r.milestone_type)
 WHERE NULLIF(NULLIF(btrim(r.asset_id), ''), 'null') IS NOT NULL
 ON CONFLICT (asset_id, milestone_id, milestone_type_id) DO NOTHING;
+
+CREATE TEMP TABLE tmp_asset_experts AS
+SELECT DISTINCT
+    NULLIF(NULLIF(btrim(r.asset_id), ''), 'null') AS asset_id,
+    person.data ->> 'employee_name' AS person_name,
+    person.data ->> 'email' AS person_email,
+    role.role_name
+FROM raw_asset_milestones AS r
+CROSS JOIN LATERAL jsonb_array_elements(r.experts::jsonb) AS person(data)
+CROSS JOIN LATERAL jsonb_array_elements_text(
+    person.data -> 'expert_in'
+) AS role(role_name)
+WHERE NULLIF(NULLIF(btrim(r.asset_id), ''), 'null') IS NOT NULL;
+
+INSERT INTO people (person_name, person_email)
+SELECT DISTINCT person_name, person_email
+FROM tmp_asset_experts
+ON CONFLICT (person_email) DO NOTHING;
+
+INSERT INTO roles (role_name)
+SELECT DISTINCT role_name
+FROM tmp_asset_experts
+ON CONFLICT (role_name) DO NOTHING;
+
+INSERT INTO asset_experts (asset_id, person_id, role_id)
+SELECT DISTINCT
+    e.asset_id,
+    p.person_id,
+    r.role_id
+FROM tmp_asset_experts AS e
+JOIN people AS p ON p.person_email = e.person_email
+JOIN roles AS r ON r.role_name = e.role_name
+ON CONFLICT (asset_id, person_id, role_id) DO NOTHING;
+
