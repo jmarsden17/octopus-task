@@ -25,10 +25,9 @@ CREATE TABLE raw_milestone_sequence (
     lifecycle_phase TEXT
 );
 
--- Run in terminal to load data into the tables from CSV files
--- Run this file through psql inside the Postgres container; CSVs are mounted at /data.
-\copy raw_asset_milestones FROM '/data/asset_milestones.csv' WITH (FORMAT CSV, HEADER TRUE)
-\copy raw_milestone_sequence FROM '/data/milestone_sequence.csv' WITH (FORMAT CSV, HEADER TRUE)
+-- Run these commands through psql inside the Postgres container.
+-- \copy raw_asset_milestones FROM '/data/asset_milestones.csv' WITH (FORMAT CSV, HEADER TRUE)
+-- \copy raw_milestone_sequence FROM '/data/milestone_sequence.csv' WITH (FORMAT CSV, HEADER TRUE)
 
 CREATE TABLE funds (
     fund_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
