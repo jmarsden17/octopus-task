@@ -43,3 +43,62 @@ BEGIN
 END;
 $$;
 
+
+-- keeps status history in sync
+CREATE OR REPLACE FUNCTION trg_asset_milestones_sync()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF TG_OP IN ('INSERT', 'UPDATE') THEN
+        PERFORM rebuild_asset_status_history(NEW.asset_id);
+    END IF;
+    IF TG_OP = 'DELETE'
+       OR (TG_OP = 'UPDATE' AND OLD.asset_id IS DISTINCT FROM NEW.asset_id) THEN
+        PERFORM rebuild_asset_status_history(OLD.asset_id);
+    END IF;
+    RETURN NULL;  -- return value is ignored for AFTER triggers
+END;
+$$;
+
+CREATE TRIGGER asset_milestones_sync
+AFTER INSERT OR UPDATE OR DELETE ON asset_milestones
+FOR EACH ROW EXECUTE FUNCTION trg_asset_milestones_sync();
+
+
+-- rejects future Actuals
+CREATE OR REPLACE FUNCTION trg_reject_future_actual()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_type_name VARCHAR;
+BEGIN
+    SELECT milestone_type_name INTO v_type_name
+    FROM milestone_types WHERE milestone_type_id = NEW.milestone_type_id;
+
+    IF v_type_name = 'Actual' AND NEW.milestone_date::date > CURRENT_DATE THEN
+        RAISE EXCEPTION
+            'Actual milestone % for asset % cannot be dated in the future (%)',
+            NEW.milestone_id, NEW.asset_id, NEW.milestone_date::date
+            USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER asset_milestones_no_future_actual
+BEFORE INSERT OR UPDATE ON asset_milestones
+FOR EACH ROW EXECUTE FUNCTION trg_reject_future_actual();
+
+CREATE OR REPLACE FUNCTION asset_status_as_of(p_asset_id VARCHAR, p_as_of DATE)
+RETURNS TABLE (lifecycle_phase_name VARCHAR, since DATE)
+LANGUAGE sql STABLE
+AS $$
+    SELECT lp.lifecycle_phase_name, h.start_date::date
+    FROM asset_status_history h
+    JOIN lifecycle_phases lp ON lp.lifecycle_phase_id = h.lifecycle_phase_id
+    WHERE h.asset_id = p_asset_id
+      AND h.start_date <= p_as_of
+      AND (h.end_date IS NULL OR p_as_of < h.end_date);
+$$;
