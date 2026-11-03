@@ -158,14 +158,36 @@ def delete_milestone(id: int):
             raise HTTPException(404, "Milestone not found")
 
 
-@app.post("/assets/{asset_id}/experts")
-def add_expert(asset_id: str, expert_name: str):
-    pass
+@app.post("/assets/{asset_id}/experts", status_code=201)
+def add_expert(asset_id: str, body: ExpertIn):
+    with db() as cur:
+        cur.execute("SELECT 1 FROM assets WHERE asset_id = %s", (asset_id,))
+        if not cur.fetchone():
+            raise HTTPException(404, "Asset not found")
+
+        cur.execute("""
+            INSERT INTO people (person_name, person_email) VALUES (%s, %s)
+            ON CONFLICT (person_email) DO UPDATE SET person_email = EXCLUDED.person_email
+            RETURNING person_id""", (body.person_name, body.person_email))
+        person_id = cur.fetchone()["person_id"]
+        try:
+            cur.execute("""
+                INSERT INTO asset_experts (asset_id, person_id, role_id)
+                VALUES (%s, %s, %s) RETURNING asset_expert_id""",
+                        (asset_id, person_id, body.role_id))
+        except errors.UniqueViolation:
+            raise HTTPException(
+                409, "That person already has this role on this asset")
+        return cur.fetchone()
 
 
-@app.delete("/experts/{id}")
-def delete_expert(id: str):
-    pass
+@app.delete("/experts/{id}", status_code=204)
+def delete_expert(id: int):
+    with db() as cur:
+        cur.execute(
+            "DELETE FROM asset_experts WHERE asset_expert_id = %s RETURNING 1", (id,))
+        if not cur.fetchone():
+            raise HTTPException(404, "Assignment not found")
 
 
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
