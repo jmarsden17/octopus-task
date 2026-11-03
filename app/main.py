@@ -71,7 +71,7 @@ def get_asset(asset_id: str):
             JOIN milestone_types mt ON mt.milestone_type_id = am.milestone_type_id
             JOIN sequences s        ON s.sequence_id = m.sequence_id
             WHERE am.asset_id = %s
-            ORDER BY s.sequence_number, am.milestone_date""", (asset_id,))
+            ORDER BY s.sequence_name, am.milestone_date""", (asset_id,))
         asset["milestones"] = cur.fetchall()
 
         cur.execute("""
@@ -98,7 +98,7 @@ def reference():
     with db() as cur:
         cur.execute("""SELECT m.milestone_id, m.milestone_name, m.asset_type_id
                        FROM milestones m JOIN sequences s ON s.sequence_id = m.sequence_id
-                       ORDER BY m.asset_type_id, s.sequence_number""")
+                       ORDER BY m.asset_type_id, s.sequence_name""")
         milestones = cur.fetchall()
         cur.execute(
             "SELECT milestone_type_id, milestone_type_name FROM milestone_types ORDER BY 1")
