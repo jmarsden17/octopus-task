@@ -52,6 +52,3 @@ def upload_data():
         )
 
     conn.commit()
-
-
-print(split_people())

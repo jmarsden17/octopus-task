@@ -88,3 +88,11 @@ FROM raw_asset_milestones r
 JOIN milestone_types mt ON r.milestone_type = mt.milestone_type
 WHERE r.asset_id IS NOT NULL AND r.milestone_id IS NOT NULL;
 
+INSERT INTO asset_experts (asset_id, person_id, role_id)
+SELECT DISTINCT r.asset_id,
+       p.person_id,
+       rl.role_id
+FROM raw_asset_milestones r
+JOIN persons p ON r.expert_name = p.person_name
+JOIN roles rl ON r.expert_role = rl.role_name
+WHERE r.asset_id IS NOT NULL AND r.expert_name IS NOT NULL AND r.expert_role IS NOT NULL;
