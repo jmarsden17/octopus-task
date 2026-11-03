@@ -27,6 +27,12 @@ class MilestonePatch(BaseModel):
     milestone_date: Optional[date] = None
 
 
+class ExpertIn(BaseModel):
+    person_name: str = Field(min_length=1)
+    person_email: str = Field(pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+    role_id: int
+
+
 @contextmanager
 def db():
     conn = psycopg2.connect(
