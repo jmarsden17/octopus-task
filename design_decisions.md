@@ -131,6 +131,7 @@ Usable endpoints are as follows:
 |---|---|---|
 | GET | `/assets` | List assets with their current phase |
 | GET | `/assets/{asset_id}` | One asset's details, milestones, status history and experts |
+| GET | `/reference` | Reference list of milestones and roles |
 | POST | `/assets/{asset_id}/milestones` | Record a milestone |
 | PATCH / DELETE | `/milestones/{id}` | Correct or delete a milestone |
 | POST | `/assets/{asset_id}/experts` | Assign a person to a role |
