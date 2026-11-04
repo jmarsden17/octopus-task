@@ -76,7 +76,7 @@ CREATE TABLE assets (
     portfolio_id INT NOT NULL,
     technology_id INT,
     country_id INT,
-    capacity_mw DECIMAL(10, 2) CHECK (capacity_mw IS NULL OR capacity_mw >= 0),
+    capacity_mw DECIMAL(10, 3) CHECK (capacity_mw IS NULL OR capacity_mw >= 0),
     company_id INT NOT NULL,
     CHECK (
         (technology_id IS NULL AND country_id IS NULL AND capacity_mw IS NULL)
