@@ -46,7 +46,7 @@ SELECT DISTINCT NULLIF(NULLIF(btrim(r.asset_id), ''), 'null'),
        p.portfolio_id,
        t.technology_id,
        c.country_id,
-       NULLIF(NULLIF(btrim(r.capacity_mw), ''), 'null')::NUMERIC(10, 2),
+    NULLIF(NULLIF(btrim(r.capacity_mw), ''), 'null')::NUMERIC(10, 3),
        co.company_id
 FROM raw_asset_milestones r
 JOIN asset_types at ON r.asset_type = at.asset_type_name

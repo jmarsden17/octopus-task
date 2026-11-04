@@ -70,13 +70,13 @@ CREATE TABLE companies (
 );
 
 CREATE TABLE assets (
-    asset_id VARCHAR NOT NULL PRIMARY KEY,
+    asset_id VARCHAR UNIQUE NOT NULL PRIMARY KEY,
     asset_type_id INT NOT NULL,
     asset_name VARCHAR NOT NULL,
     portfolio_id INT NOT NULL,
     technology_id INT,
     country_id INT,
-    capacity_mw DECIMAL(10, 2) CHECK (capacity_mw IS NULL OR capacity_mw >= 0),
+    capacity_mw DECIMAL(10, 3) CHECK (capacity_mw IS NULL OR capacity_mw >= 0),
     company_id INT NOT NULL,
     CHECK (
         (technology_id IS NULL AND country_id IS NULL AND capacity_mw IS NULL)
@@ -107,7 +107,7 @@ CREATE TABLE milestone_types (
 );
 
 CREATE TABLE milestones (
-    milestone_id VARCHAR PRIMARY KEY,
+    milestone_id VARCHAR UNIQUE NOT NULL PRIMARY KEY,
     milestone_name VARCHAR NOT NULL,
     sequence_id INT NOT NULL,
     asset_type_id INT NOT NULL,
