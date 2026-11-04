@@ -6,6 +6,20 @@
 ``` bash
 pip install -r requirements.txt
 ```
+
+2. Create `.env` file:
+``` bash
+touch .env
+```
+
+3. Copy these values into the `.env` file:
+
+POSTGRES_USER=techtest
+POSTGRES_PASSWORD=techtest
+POSTGRES_DB=assets
+POSTGRES_PORT=5432
+DATABASE_URL=postgresql://techtest:techtest@localhost:5432/assets
+
 ### Set up and seed database
 1. In your terminal run 
 ``` bash
@@ -36,13 +50,13 @@ and then run:
 
 5. Set up the triggers and functions by running:
 ``` bash
-docker compose exec -T postgres psql -U techtest -d assets < sql/asset_history.sql'
+docker compose exec -T postgres psql -U techtest -d assets < sql/asset_history.sql
 ```
 do this first so the history table fills out when seeding the data.
 
 6. Seed the normalised tables with:
 ``` bash
-docker compose exec -T postgres psql -U techtest -d assets < sql/seed_normalized.sql'
+docker compose exec -T postgres psql -U techtest -d assets < sql/seed_normalized.sql
 ```
 
 ### Run demo asset_history function
@@ -50,7 +64,7 @@ docker compose exec -T postgres psql -U techtest -d assets < sql/seed_normalized
 
 2. In the terminal run:
 ``` bash
-docker compose exec -T postgres psql -U techtest -d assets < sql/asset_history_demo.sql'
+docker compose exec -T postgres psql -U techtest -d assets < sql/asset_history_demo.sql
 ```
 The example will show in the terminal.
 
@@ -125,8 +139,7 @@ Usable endpoints are as follows:
 I used a HTML interface, as it was a simple and basic way to get a working interface. I did not have much time left, so I did not want to overcomplicate things.
 
 ## Data issues
-<!-- For each known issue (and any you found): what you decided to do and why.
-     Note any checkpoint results that changed as a result. -->
+
 - The raw csv uses `null` for missing data. I preserved the raw tables, then used `NULLIF` during normalization so these become SQL `NULL`. I didn't want to guess any missing data values, so would flag these null values.
 - I used`SELECT DISTINCT` to remove duplicates when inserting normalized asset milestones and expert assignments.
 - The milestone timestamps contain time components, but the model only needs dates. I cast the timestamps through `TIMESTAMPTZ`, then stored a `DATE`.
